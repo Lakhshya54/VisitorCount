@@ -1,0 +1,80 @@
+#include "ThingSpeak.h"
+#include <ESP8266WiFi.h>
+#include<WIFIClient.h>
+
+
+//----------------  Fill in your credentails   ---------------------
+        // your network password
+unsigned long myChannelNumber =883151 ;  // Replace the 0 with your channel number
+const char * myWriteAPIKey = "BZ48AH8Q5B7VZBAH";    // Paste your ThingSpeak Write API Key between the quotes 
+//------------------------------------------------------------------
+#define WIFI_SSID "vennela"             // your network SSID (name)
+#define WIFI_PASSWORD "12345678" //
+
+#define in 2 // for entry count
+#define out 0 //for exit count
+#define led 10 //LED
+WiFiClient  client;
+
+int count = 0; //counting variable
+int x;
+int val; // current count value
+
+void setup() {
+   WiFi.mode(WIFI_STA);
+  Serial.begin(115200); 
+ WiFi.begin(WIFI_SSID, WIFI_PASSWORD);//Connecting to wifi
+Serial.print("connecting");
+ while (WiFi.status() != WL_CONNECTED) //Checking wifi status
+ {
+  Serial.print(".");
+  delay(500);
+ }
+  Serial.println();
+ Serial.print("connected: ");
+ Serial.println(WiFi.localIP());
+ ThingSpeak.begin(client); //Connecting to ThingSpeak
+ pinMode(in,INPUT);
+ pinMode(out,INPUT);
+ pinMode(led,OUTPUT);
+ 
+}
+void loop() {
+ int in_value=digitalRead(in);
+ int out_value=digitalRead(out);
+  if(in_value==LOW) // detects if any person enters
+    {
+      count++; //Increment count
+      Serial.print(count);
+     Serial.println("");
+     delay(500);
+    }
+    if(out_value==LOW)//detects if any person exits
+    {
+      count--; //Decrement count
+       Serial.print(count);
+       Serial.println("");
+     delay(500);
+    }
+    val=count;
+  x = ThingSpeak.writeField(myChannelNumber, 1, val, myWriteAPIKey);// Check the return code
+  if(x == 200) 
+{
+    Serial.println("Channel update successful.");
+    delay(20000);
+  }
+  else{
+    Serial.println("Problem updating channel. HTTP error code " + String(x));
+    delay(20000);
+  }
+
+   if(count==0)
+    {
+       digitalWrite(led,LOW);
+    }
+    else
+    {
+      digitalWrite(led,HIGH);
+    }
+    // Wait 20 seconds before sending a new value
+}
